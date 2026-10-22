@@ -11,7 +11,7 @@
 :root{
   color-scheme: dark;
   --bg:#0A141C; --ocean:#0E2232; --land:#1A2E3D; --land-hi:#2A4A60; --border:#36566F;
-  --panel:rgba(9,18,26,.86); --panel-solid:#0F1D28; --rule:#243C4C; --chip:#152836;
+  --panel:rgba(9,18,26,.9); --panel-solid:#0F1D28; --rule:#243C4C; --chip:#152836;
   --fg:#E8EEF2; --dim:#9AB0BF; --faint:#61798A;
   --road:#F5A83B; --rail:#3FD8C0; --sea:#86B4FF; --alt:#C7A6FF; --air:#FF8F8F;
   --good:#5ED79B; --warn:#FFB547; --bad:#FF6B6B; --fc:#FFE066;
@@ -20,6 +20,7 @@
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 html,body{height:100%}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);overflow:hidden;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit}
 a{color:var(--sea)}
@@ -42,7 +43,7 @@ a{color:var(--sea)}
 .slide.active{opacity:1;visibility:visible;transition:opacity .55s ease .15s,visibility 0s}
 .panel{position:absolute;left:64px;top:84px;width:660px;display:flex;flex-direction:column;gap:20px}
 .panel.wide{width:1472px}
-.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:22px 26px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:22px 26px}
 
 .eyebrow{font-family:var(--mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:.95;letter-spacing:.005em}
@@ -256,7 +257,8 @@ table.resp td:first-child{color:var(--dim)}
 .prog{flex:1;display:flex;gap:4px;align-items:center;height:100%}
 .prog button{flex:1;height:6px;border:0;padding:0;border-radius:3px;background:var(--rule);cursor:pointer;position:relative}
 .prog button.p1{--pc:var(--road)}.prog button.p2{--pc:var(--rail)}.prog button.p3{--pc:var(--sea)}.prog button.p4{--pc:var(--alt)}.prog button.p5{--pc:var(--good)}.prog button.px{--pc:var(--faint)}
-.prog button.seen{background:color-mix(in srgb,var(--pc) 55%,var(--rule))}
+.prog button.seen{background:var(--pc);opacity:.55}
+@supports (background:color-mix(in srgb,red 50%,blue)){.prog button.seen{opacity:1;background:color-mix(in srgb,var(--pc) 55%,var(--rule))}}
 .prog button.cur{background:var(--pc);height:10px}
 .ctrl{display:flex;gap:8px}
 .ctrl button{border:1px solid var(--rule);background:var(--panel);border-radius:6px;height:36px;padding:0 12px;font-family:var(--mono);font-size:13px;cursor:pointer;color:var(--dim)}
@@ -824,6 +826,7 @@ function headOf(r){ const pts=partial(r,Math.max(r.p,0.0001)); return [pts[pts.l
 /* ---------- camera ---------- */
 const cam = {lon:-38,lat:36,k:1.05,fx:.68,fy:.53};
 let tw = null; // tween
+let camMoving = false;
 function camTo(t,dur=1800){
   const from={...cam}, to={...cam,...t};
   if(reduce) dur=0;
@@ -853,7 +856,9 @@ let W=0,H=0,DPR=1;
 const proj = hasGeo ? d3.geoOrthographic().clipAngle(90).precision(0.35) : null;
 function resize(){
   layout();
-  DPR=Math.min(2,devicePixelRatio||1); W=innerWidth; H=innerHeight;
+  W=innerWidth; H=innerHeight;
+  // cap canvas pixels (~6M per layer) so big high-DPI screens don't redraw tens of millions of pixels a frame
+  DPR=Math.max(1, Math.min(2, devicePixelRatio||1, Math.sqrt(6e6/Math.max(1,W*H))));
   for(const c of [cvB,cvO]){ c.width=Math.round(W*DPR); c.height=Math.round(H*DPR); }
   lastKey='';
 }
@@ -862,7 +867,9 @@ function applyProj(){
 }
 let lastKey='';
 function drawBase(){
-  const key=[cam.lon.toFixed(3),cam.lat.toFixed(3),cam.k.toFixed(4),cam.fx.toFixed(4),W,H].join();
+  // detailed coastlines cost ~20x the coarse set, so draw them only once the camera rests
+  const fine = cam.k>2.6 && !camMoving;
+  const key=[cam.lon.toFixed(3),cam.lat.toFixed(3),cam.k.toFixed(4),cam.fx.toFixed(4),W,H,DPR,fine].join();
   if(key===lastKey) return; lastKey=key;
   const ctx=ctxB; ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
   const path=d3.geoPath(proj,ctx), Rr=proj.scale(), [tx,ty]=proj.translate();
@@ -874,7 +881,6 @@ function drawBase(){
   og.addColorStop(0,'#13324A'); og.addColorStop(1,C.ocean);
   ctx.beginPath(); path({type:'Sphere'}); ctx.fillStyle=og; ctx.fill();
   ctx.beginPath(); path(G.grat); ctx.strokeStyle='rgba(134,180,255,0.07)'; ctx.lineWidth=1; ctx.stroke();
-  const fine = cam.k>2.6;
   ctx.beginPath(); path(fine?G.land50:G.land110); ctx.fillStyle=C.land; ctx.fill();
   ctx.beginPath(); path(fine?G.hi50:G.hi110); ctx.fillStyle=C.landHi; ctx.fill();
   ctx.beginPath(); path(fine?G.b50:G.b110); ctx.strokeStyle=C.border; ctx.lineWidth=fine?0.9:0.6; ctx.stroke();
@@ -956,8 +962,8 @@ function frame(now){
       if(r.p<r.tp){ r.p = reduce? r.tp : Math.min(r.tp, r.p+dt/r.dur); } else if(r.p>r.tp){ r.p=r.tp; }
       r.a += (r.ta-r.a)*Math.min(1,dt/250);
     }
-    stepCam(now);
-    if(follow){ const r=R[follow]; if(r.p>0&&r.p<1){ const [h]=headOf(r); const c=d3.geoInterpolate([cam.lon,cam.lat],h)(Math.min(1,dt/500)); cam.lon=c[0]; cam.lat=c[1]; } }
+    stepCam(now); camMoving=!!tw;
+    if(follow){ const r=R[follow]; if(r.p>0&&r.p<1){ const [h]=headOf(r); const c=d3.geoInterpolate([cam.lon,cam.lat],h)(Math.min(1,dt/500)); cam.lon=c[0]; cam.lat=c[1]; camMoving=true; } }
     applyProj(); drawBase(); drawOver(now);
   }
   requestAnimationFrame(frame);
