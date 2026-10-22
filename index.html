@@ -779,6 +779,23 @@ if(hasGeo){
     hi110: {type:'FeatureCollection',features:topojson.feature(GEO110, GEO110.objects.countries).features.filter(f=>hi.has(f.id))},
     grat: d3.geoGraticule10()
   };
+  // all of the 50m data is too heavy to redraw every frame; the zoomed scenes only ever show Europe or Mexico,
+  // so clip the detailed land and borders to those two caps once
+  G.caps = [{id:'eu', c:[15,50], r:50}, {id:'mx', c:[-97,23], r:35}]
+    .map(cp=>({...cp, land:capClip(G.land50,cp.c,cp.r), b:capClip(G.b50,cp.c,cp.r)}));
+}
+function capClip(obj, center, radius){
+  const raw=(x,y)=>[x,y]; raw.invert=(x,y)=>[x,y];
+  const p=d3.geoProjection(raw).scale(1).translate([0,0]).rotate([-center[0],-center[1]]).clipAngle(radius).precision(0);
+  const rings=[], lines=[]; let cur=null, inPoly=false;
+  d3.geoStream(obj, p.stream({point(x,y){ cur.push(p.invert([x,y])); }, lineStart(){ cur=[]; }, lineEnd(){ if(cur.length>1) (inPoly?rings:lines).push(cur); cur=null; }, polygonStart(){ inPoly=true; }, polygonEnd(){ inPoly=false; }, sphere(){}}));
+  if(!rings.length) return {type:'MultiLineString', coordinates:lines};
+  // spherical winding: a ring enclosing more than a hemisphere is a hole; attach it to the land around it
+  const outer=[], holes=[];
+  for(const r of rings){ const c=r.concat([r[0]]); (d3.geoArea({type:'Polygon',coordinates:[c]})>2*Math.PI?holes:outer).push(c); }
+  const polys=outer.map(o=>[o]);
+  for(const h of holes){ const host=polys.find(pp=>d3.geoContains({type:'Polygon',coordinates:[pp[0]]}, h[0])); if(host) host.push(h); }
+  return {type:'MultiPolygon', coordinates:polys};
 }
 
 /* ---------- places & routes ---------- */
@@ -826,7 +843,6 @@ function headOf(r){ const pts=partial(r,Math.max(r.p,0.0001)); return [pts[pts.l
 /* ---------- camera ---------- */
 const cam = {lon:-38,lat:36,k:1.05,fx:.68,fy:.53};
 let tw = null; // tween
-let camMoving = false;
 function camTo(t,dur=1800){
   const from={...cam}, to={...cam,...t};
   if(reduce) dur=0;
@@ -867,9 +883,8 @@ function applyProj(){
 }
 let lastKey='';
 function drawBase(){
-  // detailed coastlines cost ~20x the coarse set, so draw them only once the camera rests
-  const fine = cam.k>2.6 && !camMoving;
-  const key=[cam.lon.toFixed(3),cam.lat.toFixed(3),cam.k.toFixed(4),cam.fx.toFixed(4),W,H,DPR,fine].join();
+  const cap = cam.k>2.6 ? fineCap() : null;
+  const key=[cam.lon.toFixed(3),cam.lat.toFixed(3),cam.k.toFixed(4),cam.fx.toFixed(4),W,H,DPR,cap?cap.id:'-'].join();
   if(key===lastKey) return; lastKey=key;
   const ctx=ctxB; ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
   const path=d3.geoPath(proj,ctx), Rr=proj.scale(), [tx,ty]=proj.translate();
@@ -881,10 +896,17 @@ function drawBase(){
   og.addColorStop(0,'#13324A'); og.addColorStop(1,C.ocean);
   ctx.beginPath(); path({type:'Sphere'}); ctx.fillStyle=og; ctx.fill();
   ctx.beginPath(); path(G.grat); ctx.strokeStyle='rgba(134,180,255,0.07)'; ctx.lineWidth=1; ctx.stroke();
-  ctx.beginPath(); path(fine?G.land50:G.land110); ctx.fillStyle=C.land; ctx.fill();
-  ctx.beginPath(); path(fine?G.hi50:G.hi110); ctx.fillStyle=C.landHi; ctx.fill();
-  ctx.beginPath(); path(fine?G.b50:G.b110); ctx.strokeStyle=C.border; ctx.lineWidth=fine?0.9:0.6; ctx.stroke();
+  ctx.beginPath(); path(cap?cap.land:G.land110); ctx.fillStyle=C.land; ctx.fill();
+  ctx.beginPath(); path(cap?G.hi50:G.hi110); ctx.fillStyle=C.landHi; ctx.fill();
+  ctx.beginPath(); path(cap?cap.b:G.b110); ctx.strokeStyle=C.border; ctx.lineWidth=cap?0.9:0.6; ctx.stroke();
   ctx.beginPath(); path({type:'Sphere'}); ctx.strokeStyle='rgba(134,180,255,0.28)'; ctx.lineWidth=1.2; ctx.stroke();
+}
+// the detailed cap that covers the whole canvas, if any; detail depends only on the view, never on motion
+function fineCap(){
+  const c=proj.invert([W/2,H/2]); if(!c||isNaN(c[1])) return null;
+  let r=0;
+  for(const p of [[0,0],[W,0],[0,H],[W,H]]){ const q=proj.invert(p); if(!q||isNaN(q[1])) return null; r=Math.max(r,d3.geoDistance(c,q)); }
+  return G.caps.find(cp=>d3.geoDistance(cp.c,c)+r <= cp.r*Math.PI/180) || null;
 }
 const visible = ll => d3.geoDistance(ll,[cam.lon,cam.lat]) < Math.PI/2 - 0.02;
 const MODE = {road:{c:()=>C.road,w:3.2,dash:[]}, rail:{c:()=>C.rail,w:3.2,dash:[]}, sea:{c:()=>C.sea,w:2.6,dash:[9,6]}, alt:{c:()=>C.alt,w:2.4,dash:[7,6]}, altsea:{c:()=>C.alt,w:2.2,dash:[7,6]}, air:{c:()=>C.air,w:2.4,dash:[2,6]}};
@@ -962,8 +984,8 @@ function frame(now){
       if(r.p<r.tp){ r.p = reduce? r.tp : Math.min(r.tp, r.p+dt/r.dur); } else if(r.p>r.tp){ r.p=r.tp; }
       r.a += (r.ta-r.a)*Math.min(1,dt/250);
     }
-    stepCam(now); camMoving=!!tw;
-    if(follow){ const r=R[follow]; if(r.p>0&&r.p<1){ const [h]=headOf(r); const c=d3.geoInterpolate([cam.lon,cam.lat],h)(Math.min(1,dt/500)); cam.lon=c[0]; cam.lat=c[1]; camMoving=true; } }
+    stepCam(now);
+    if(follow){ const r=R[follow]; if(r.p>0&&r.p<1){ const [h]=headOf(r); const c=d3.geoInterpolate([cam.lon,cam.lat],h)(Math.min(1,dt/500)); cam.lon=c[0]; cam.lat=c[1]; } }
     applyProj(); drawBase(); drawOver(now);
   }
   requestAnimationFrame(frame);
