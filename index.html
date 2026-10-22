@@ -1089,8 +1089,8 @@ function escort(ctx,T,u,s,d0){
 function euConvoy(ctx,T,u,s){ euTruck(ctx,T,u,s,42); euTruck(ctx,T,u,s,0); }
 function mxConvoy(ctx,T,u,s){ usTruck(ctx,T,u,s,70); usTruck(ctx,T,u,s,16); escort(ctx,T,u,s,0); }
 const VEHICLE={road1:[euConvoy,1.3,85], rail:[train,1.2,140], sea:[ship,1.25,200], road2:[mxConvoy,1.3,125]};
-// keep only the side of the line through point p that lies along (dx,dy)
-function clipHalf(ctx,p,dx,dy){ const B=5000, nx=-dy, ny=dx; ctx.beginPath(); ctx.moveTo(p[0]+nx*B,p[1]+ny*B); ctx.lineTo(p[0]+nx*B+dx*B,p[1]+ny*B+dy*B); ctx.lineTo(p[0]-nx*B+dx*B,p[1]-ny*B+dy*B); ctx.lineTo(p[0]-nx*B,p[1]-ny*B); ctx.closePath(); ctx.clip(); }
+// hide a strip running from point p along (dx,dy): the stretch beyond a start or end point where vehicles wait or vanish
+function clipStrip(ctx,p,dx,dy,len,hw){ const nx=-dy, ny=dx; ctx.beginPath(); ctx.rect(-1e4,-1e4,3e4,3e4); ctx.moveTo(p[0]+nx*hw,p[1]+ny*hw); ctx.lineTo(p[0]+nx*hw+dx*len,p[1]+ny*hw+dy*len); ctx.lineTo(p[0]-nx*hw+dx*len,p[1]-ny*hw+dy*len); ctx.lineTo(p[0]-nx*hw,p[1]-ny*hw); ctx.closePath(); ctx.clip('evenodd'); }
 const unit=(a,b)=>{ const L=Math.hypot(b[0]-a[0],b[1]-a[1])||1; return [(b[0]-a[0])/L,(b[1]-a[1])/L]; };
 // the convoy drives out of the start point and, once the line is drawn, on into the end point at the same speed
 function drawVehicle(ctx,leg,s,now){
@@ -1100,8 +1100,9 @@ function drawVehicle(ctx,leg,s,now){
   if(h>r.len+Lg) return;
   if(!visible(h>=r.len ? r.d[n-1] : partial(r,Math.max(h/r.len,1e-4)).pop())) return;
   ctx.save();
-  if(h<Lg*1.3){ const S=proj(r.d[0]), v=unit(S,proj(r.d[1])); clipHalf(ctx,S,v[0],v[1]); }
-  if(h>r.len-Lg*1.3){ const E=proj(r.d[n-1]), w=unit(proj(r.d[n-2]),E); clipHalf(ctx,E,-w[0],-w[1]); }
+  const hw=45*s, sl=Lpx+60*s;
+  if(h<Lg*1.05){ const S=proj(r.d[0]), v=unit(S,proj(r.d[1])); clipStrip(ctx,S,-v[0],-v[1],sl,hw); }
+  if(h>r.len-Lg*1.05){ const E=proj(r.d[n-1]), w=unit(proj(r.d[n-2]),E); clipStrip(ctx,E,w[0],w[1],sl,hw); }
   fn(ctx,trackBack(r,Lpx,h),u,s); shade(ctx,false,s);
   ctx.restore();
 }
