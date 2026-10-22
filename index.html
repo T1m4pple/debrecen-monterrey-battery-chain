@@ -409,10 +409,10 @@ body.editing [data-ek]:focus{outline:2px solid var(--fc);background:rgba(255,224
       <div class="eyebrow">Part 2 · We are the buyer's 3PL</div>
       <h2>Four legs, one sealed box</h2>
       <div class="legs">
-        <div class="leg" style="--c:var(--road)" data-fc="7"><span class="m">Road</span><span class="d num">15 km</span><span class="t">Same day · ADR truck</span></div>
+        <div class="leg" style="--c:var(--road)" data-fc="7"><span class="m">Road</span><span class="d num">15 km</span><span class="t">Same day · 2 ADR trucks</span></div>
         <div class="leg" style="--c:var(--rail)" data-fc="4"><span class="m">Rail</span><span class="d num">1,600 km</span><span class="t">~3 days · electric</span></div>
         <div class="leg" style="--c:var(--sea)" data-fc="3 23"><span class="m">Sea</span><span class="d num">9,800 km</span><span class="t">~16 days · direct</span></div>
-        <div class="leg" style="--c:var(--road)" data-fc="5"><span class="m">Road</span><span class="d num">500 km</span><span class="t">1 day · hazmat + escort</span></div>
+        <div class="leg" style="--c:var(--road)" data-fc="5"><span class="m">Road</span><span class="d num">500 km</span><span class="t">1 day · 2 hazmat trucks + escort</span></div>
       </div>
       <div class="card">
         <div class="eyebrow" style="font-size:13px;margin-bottom:6px">Door-to-door plan, days</div>
@@ -437,7 +437,7 @@ body.editing [data-ek]:focus{outline:2px solid var(--fc);background:rgba(255,224
       </div>
       <div style="display:flex;gap:10px"><button class="btn primary" id="jPlay">▶ Play the journey</button><button class="btn" id="jReplay">Restart</button></div>
     </div>
-    <aside class="notes" data-time="0:55" data-cue="Press → once per sentence group. Each press runs one leg on the map (6 states: dock, road, rail, sea, port, road). Or press 'Play the journey' and talk over it (about 30 s).">"Day zero: two sealed 40-foot containers leave the plant and drive 15 km to the Debrecen Intermodal Terminal, run by GYSEV CARGO. [→] Day one: they go on GYSEV CARGO's train to Wilhelmshaven, Germany's deep-water port, about 1,600 kilometres. [→] Day seven: Hapag-Lloyd's AL4 service sails. It crosses the Atlantic, calls at Veracruz, and on day 23 our boxes come off at Altamira, the closest big port to Monterrey. [→] After two days of customs and DG release, [→] a hazmat truck with an escort drives 500 km to Monterrey. Delivered on day 26. Over to [P3] for what's inside the boxes."</aside>
+    <aside class="notes" data-time="0:55" data-cue="Press → once per sentence group. Each press runs one leg on the map (6 states: dock, road, rail, sea, port, road). Or press 'Play the journey' and talk over it (about 30 s).">"Day zero: two sealed 40-foot containers leave the plant and drive 15 km to the Debrecen Intermodal Terminal, run by GYSEV CARGO. [→] Day one: they go on GYSEV CARGO's train to Wilhelmshaven, Germany's deep-water port, about 1,600 kilometres. [→] Day seven: Hapag-Lloyd's AL4 service sails. It crosses the Atlantic, calls at Veracruz, and on day 23 our boxes come off at Altamira, the closest big port to Monterrey. [→] After two days of customs and DG release, [→] two hazmat trucks with an escort drive 500 km to Monterrey. Delivered on day 26. Over to [P3] for what's inside the boxes."</aside>
   </section>
 
   <!-- 6 EQUIPMENT -->
@@ -447,8 +447,8 @@ body.editing [data-ek]:focus{outline:2px solid var(--fc);background:rgba(255,224
       <h2>Weight decides: 2 × 40' at ~21 t</h2>
       <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:22px;align-items:start">
         <div class="card box40">
-          <div class="eyebrow" style="font-size:13px;margin-bottom:8px">Top view · 40' dry container · inside 12.03 × 2.35 m · 18 crates × ~1,170 kg</div>
-          <svg viewBox="0 0 800 210" role="img" aria-label="Top view of a 40 foot container with 18 crates in two rows, bracing and airbags at the door end">
+          <div class="eyebrow" style="font-size:13px;margin-bottom:8px">Top view · 1 of 2 × 40' dry · inside 12.03 × 2.35 m · 18 crates × ~1,170 kg</div>
+          <svg viewBox="0 0 800 210" role="img" aria-label="Top view of one of the two 40 foot containers, with 18 crates in two rows, bracing and airbags at the door end">
             <rect x="20" y="20" width="722" height="141" rx="3" fill="none" stroke="#9AB0BF" stroke-width="2"/>
             <line x1="742" y1="20" x2="742" y2="161" stroke="#F5A83B" stroke-width="4"/>
             <text x="752" y="95" fill="#9AB0BF" font-family="IBM Plex Mono,monospace" font-size="12">DOORS</text>
@@ -464,7 +464,7 @@ body.editing [data-ek]:focus{outline:2px solid var(--fc);background:rgba(255,224
         <dl class="specs card" style="margin:0">
           <dt>Box</dt><dd data-fc="14">40' dry, Hapag-Lloyd owned, max payload ~26.5 t</dd>
           <dt>Count</dt><dd>2 per shipment · 48 a year</dd>
-          <dt>Road</dt><dd data-fc="15">~38 t gross, under Hungary's 40 t limit</dd>
+          <dt>Road</dt><dd data-fc="15">1 box per truck, ~38 t gross, under Hungary's 40 t limit</dd>
           <dt>Rail</dt><dd>Container flat wagons (Sgns)</dd>
           <dt>Sea</dt><dd>AL4 ship, ~5,500–6,600 TEU, DG approved</dd>
         </dl>
@@ -505,7 +505,7 @@ body.editing [data-ek]:focus{outline:2px solid var(--fc);background:rgba(255,224
         <div class="col" style="--c:var(--road)"><h3><i></i>Mexico</h3>
           <div class="who-card" data-fc="8"><b>Altamira terminal</b><span>ATP or IPM: discharge and DG storage</span></div>
           <div class="who-card"><b>Agente aduanal</b><span>Licensed broker: files and pays the pedimento</span></div>
-          <div class="who-card" data-fc="20"><b>Grupo Traxión + escort</b><span>Hazmat truck with GPS and custodia</span></div>
+          <div class="who-card" data-fc="20"><b>Grupo Traxión + escort</b><span>Two hazmat trucks with GPS and custodia</span></div>
           <div class="who-card"><b>Buyer</b><span>Monterrey EV plant (IMMEX)</span></div>
         </div>
       </div>
@@ -547,7 +547,7 @@ body.editing [data-ek]:focus{outline:2px solid var(--fc);background:rgba(255,224
           <div class="ms done"><div class="o">4</div><b>On board, EU exit</b><span>B/L · day 7</span></div>
           <div class="ms" id="ms5"><div class="o">5</div><b>Vessel ETA Altamira</b><span data-fc="21">Live tracker · day 23</span></div>
           <div class="ms"><div class="o">6</div><b>Pedimento paid, released</b><span>Broker · day 25</span></div>
-          <div class="ms"><div class="o">7</div><b>Truck out, escorted</b><span>GPS · day 25</span></div>
+          <div class="ms"><div class="o">7</div><b>Trucks out, escorted</b><span>GPS · day 25</span></div>
           <div class="ms"><div class="o">8</div><b>Delivered, POD</b><span>Shock check · day 26</span></div>
         </div>
       </div>
@@ -653,7 +653,7 @@ body.editing [data-ek]:focus{outline:2px solid var(--fc);background:rgba(255,224
     <div class="panel" style="top:140px;width:780px;gap:26px">
       <div class="eyebrow">Our recommendation</div>
       <h1 style="font-size:92px">Rail → Ship → Road</h1>
-      <p class="lead">GYSEV CARGO to Wilhelmshaven, Hapag-Lloyd direct to Altamira, hazmat truck to Monterrey.</p>
+      <p class="lead">GYSEV CARGO to Wilhelmshaven, Hapag-Lloyd direct to Altamira, hazmat trucks to Monterrey.</p>
       <div class="stats">
         <div class="stat"><div class="v num">26</div><div class="l">days door to door, limit 28</div></div>
         <div class="stat"><div class="v num">€20k</div><div class="l">per shipment, about €0.48 per kg</div></div>
@@ -1010,7 +1010,7 @@ const JOURNEY = [
   {cam:{lon:21.45,lat:47.6,k:34,fx:.75,fy:.5}, legs:{}, labels:['plant','dit'], day:[0,0], km:[0,0], mode:'Dock', head:null,
    h:"Day 0 · Seller's dock, Debrecen", t:"Two sealed 40' containers, about 21 t each, are loaded at the seller's dock. Under FCA, risk passes to the buyer right here.", fc:"10"},
   {cam:{lon:21.45,lat:47.6,k:34,fx:.75,fy:.5}, legs:{road1:'draw:1600'}, labels:['plant','dit'], day:[0,0], km:[0,15], mode:'Road', head:'road1',
-   h:"Road · 15 km · same day", t:"An ADR truck takes the boxes to the Debrecen Intermodal Terminal, run by GYSEV CARGO. The containers go from truck to train.", fc:"7"},
+   h:"Road · 15 km · same day", t:"Two ADR trucks, one container each, take the boxes to the Debrecen Intermodal Terminal, run by GYSEV CARGO. There they go from truck to train.", fc:"7"},
   {cam:{lon:14.2,lat:50.4,k:5.2,fx:.75,fy:.5}, legs:{road1:'full',rail:'draw:5200'}, labels:['dit','vie','han','whv'], day:[1,4], km:[15,1615], mode:'Rail', head:'rail',
    h:"Rail · ~1,600 km · days 1–4", t:"GYSEV CARGO's container train runs to Wilhelmshaven's JadeWeserPort, arriving about 2 days before the vessel cut-off. These are internal EU borders, so there are no customs stops.", fc:"1 4"},
   {cam:{lon:5,lat:50,k:2.3,fx:.72,fy:.5}, follow:'sea', legs:{road1:'full',rail:'full',sea:'draw:9000'}, labels:['whv','ver','alt'], day:[7,23], km:[1615,11415], mode:'Sea', head:'sea',
@@ -1018,7 +1018,7 @@ const JOURNEY = [
   {cam:{lon:-97.6,lat:21.6,k:9,fx:.72,fy:.5}, legs:{road1:'full',rail:'full',sea:'full'}, labels:['ver','alt'], day:[23,25], km:[11415,11415], mode:'Port', head:null,
    h:"Altamira · days 23–25", t:"Discharge, dangerous-goods release and the pedimento. The boxes enter Mexican customs territory here. The broker pre-files so the containers can leave on day 25.", fc:"6 8"},
   {cam:{lon:-99.1,lat:24.1,k:10,fx:.72,fy:.5}, legs:{road1:'full',rail:'full',sea:'full',road2:'draw:3600'}, labels:['alt','cvic','mty'], day:[25,26], km:[11415,11915], mode:'Road', head:'road2',
-   h:"Road · ~500 km · day 26", t:"A hazmat truck with GPS and a security escort drives via Ciudad Victoria to Monterrey. Delivered on day 26, with 2 days to spare.", fc:"5 20"}
+   h:"Road · ~500 km · day 26", t:"Two hazmat trucks, one container each, drive in convoy with GPS and a security escort via Ciudad Victoria to Monterrey. Delivered on day 26, with 2 days to spare.", fc:"5 20"}
 ];
 
 function applyScene(sc, instant){
@@ -1137,7 +1137,7 @@ function updateCost(){
 updateCost();
 
 /* control tower sim */
-const FEED=[["06:12","w","Tracker: AL4 vessel slowed by weather, ETA Altamira +24 h"],["06:14","","Control tower: buffer drops from 2 days to 1, still inside 28"],["06:20","","Broker pre-files pedimento; truck and escort moved to day 26"],["07:40","g","Customer called with the recovery plan (within 2 h)"]];
+const FEED=[["06:12","w","Tracker: AL4 vessel slowed by weather, ETA Altamira +24 h"],["06:14","","Control tower: buffer drops from 2 days to 1, still inside 28"],["06:20","","Broker pre-files pedimento; trucks and escort moved to day 26"],["07:40","g","Customer called with the recovery plan (within 2 h)"]];
 function sim(){ $('#ms5').classList.add('alert'); const m5=$('#ms5 span'); m5.dataset.ek='m5-a'; m5.innerHTML=E('m5-a','ETA +24 h'); const f=$('#feed'); f.innerHTML=FEED.map((r,i)=>`<div><span class="t" data-ek="f${i}-t">${E('f'+i+'-t',r[0])}</span><span class="${r[1]}" data-ek="f${i}-m">${E('f'+i+'-m',r[2])}</span></div>`).join(''); markEditables($('#ms5').parentNode); markEditables(f); [...f.children].forEach((d,i)=>setTimeout(()=>d.classList.add('in'), reduce?0:300+i*700)); }
 function simReset(){ $('#ms5').classList.remove('alert'); const m5=$('#ms5 span'); m5.dataset.ek='m5-n'; m5.innerHTML=E('m5-n','Live tracker · day 23'); $('#feed').innerHTML=`<div class="in"><span class="t" data-ek="f-init-t">${E('f-init-t','05:00')}</span><span class="g" data-ek="f-init-m">${E('f-init-m','All 4 milestones so far on time')}</span></div>`; if(typeof markEditables==='function'){ markEditables($('#ms5').parentNode); markEditables($('#feed')); } }
 $('#simBtn').onclick=sim; $('#simReset').onclick=simReset; simReset();
