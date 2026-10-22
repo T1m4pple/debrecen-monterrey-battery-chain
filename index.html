@@ -932,7 +932,7 @@ function drawOver(now){
     for(const k of legs){ const r=R[k]; if(t<=acc+r.len){ const pts=partial(r,(t-acc)/r.len), pt=pts[pts.length-1]; if(visible(pt)){ const [x,y]=proj(pt); glowDot(ctx,x,y,C.fg,s);} break;} acc+=r.len; }
   }
   // moving container
-  if(headLeg){ const r=R[headLeg]; if(r.p>0&&r.a>0.5){ const [h]=headOf(r); if(visible(h)) drawVehicle(ctx,headLeg,s); } }
+  if(headLeg){ const r=R[headLeg]; if(r.p>0&&r.a>0.5) drawVehicle(ctx,headLeg,s,now); }
   // labels
   ctx.textBaseline='middle';
   const ov=[];
@@ -980,9 +980,13 @@ function rr(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x
 function shade(ctx,on,s){ ctx.shadowColor=on?'rgba(0,0,0,.55)':'transparent'; ctx.shadowBlur=on?6*s:0; ctx.shadowOffsetX=on?1.5*s:0; ctx.shadowOffsetY=on?2.5*s:0; }
 function place(ctx,p,u){ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.scale(u,u); }
 // screen positions behind the head of a route, so trailers and wagons bend with the track
-function trackBack(r,maxD){
-  const pts=partial(r,Math.max(r.p,0.0001)), P=[proj(pts[pts.length-1])], cum=[0];
-  for(let i=pts.length-2;i>=0 && cum[cum.length-1]<maxD;i--){ const q=proj(pts[i]), p=P[P.length-1], d=Math.hypot(q[0]-p[0],q[1]-p[1]); if(d<0.01) continue; P.push(q); cum.push(cum[cum.length-1]+d); }
+// h is how far the head has travelled (radians); past r.len it runs on along the last stretch, into the end point
+function trackBack(r,maxD,h){
+  const n=r.d.length, E=proj(r.d[n-1]), o=(h-r.len)*proj.scale();
+  let pts, P, cum, i;
+  if(o>0.01){ const B=proj(r.d[n-2]), L=Math.hypot(E[0]-B[0],E[1]-B[1])||1; pts=r.d; P=[[E[0]+(E[0]-B[0])/L*o, E[1]+(E[1]-B[1])/L*o], E]; cum=[0,o]; i=n-2; }
+  else { pts=partial(r,Math.min(1,Math.max(h/r.len,1e-4))); P=[proj(pts[pts.length-1])]; cum=[0]; i=pts.length-2; }
+  for(;i>=0 && cum[cum.length-1]<maxD;i--){ const q=proj(pts[i]), p=P[P.length-1], d=Math.hypot(q[0]-p[0],q[1]-p[1]); if(d<0.01) continue; P.push(q); cum.push(cum[cum.length-1]+d); }
   let ex,ey; // past the start of the route, carry on straight back along its first leg
   if(P.length>1){ const a=P[P.length-2], b=P[P.length-1], L=Math.hypot(b[0]-a[0],b[1]-a[1]); ex=(b[0]-a[0])/L; ey=(b[1]-a[1])/L; }
   else { const a=proj(r.d[0]), b=proj(r.d[Math.min(1,r.d.length-1)]), L=Math.hypot(b[0]-a[0],b[1]-a[1])||1; ex=(a[0]-b[0])/L; ey=(a[1]-b[1])/L; }
@@ -1085,7 +1089,22 @@ function escort(ctx,T,u,s,d0){
 function euConvoy(ctx,T,u,s){ euTruck(ctx,T,u,s,42); euTruck(ctx,T,u,s,0); }
 function mxConvoy(ctx,T,u,s){ usTruck(ctx,T,u,s,70); usTruck(ctx,T,u,s,16); escort(ctx,T,u,s,0); }
 const VEHICLE={road1:[euConvoy,1.3,85], rail:[train,1.2,140], sea:[ship,1.25,200], road2:[mxConvoy,1.3,125]};
-function drawVehicle(ctx,leg,s){ const [fn,k,len]=VEHICLE[leg], u=s*k; fn(ctx,trackBack(R[leg],len*u),u,s); shade(ctx,false,s); }
+// keep only the side of the line through point p that lies along (dx,dy)
+function clipHalf(ctx,p,dx,dy){ const B=5000, nx=-dy, ny=dx; ctx.beginPath(); ctx.moveTo(p[0]+nx*B,p[1]+ny*B); ctx.lineTo(p[0]+nx*B+dx*B,p[1]+ny*B+dy*B); ctx.lineTo(p[0]-nx*B+dx*B,p[1]-ny*B+dy*B); ctx.lineTo(p[0]-nx*B,p[1]-ny*B); ctx.closePath(); ctx.clip(); }
+const unit=(a,b)=>{ const L=Math.hypot(b[0]-a[0],b[1]-a[1])||1; return [(b[0]-a[0])/L,(b[1]-a[1])/L]; };
+// the convoy drives out of the start point and, once the line is drawn, on into the end point at the same speed
+function drawVehicle(ctx,leg,s,now){
+  const r=R[leg], [fn,k,len]=VEHICLE[leg], u=s*k, Lpx=len*u, Lg=Lpx/proj.scale(), n=r.d.length;
+  let h=r.p*r.len;
+  if(r.p>=1){ if(r.tDone==null) r.tDone=now; h=r.len+(now-r.tDone)*r.len/r.dur; }
+  if(h>r.len+Lg) return;
+  if(!visible(h>=r.len ? r.d[n-1] : partial(r,Math.max(h/r.len,1e-4)).pop())) return;
+  ctx.save();
+  if(h<Lg*1.3){ const S=proj(r.d[0]), v=unit(S,proj(r.d[1])); clipHalf(ctx,S,v[0],v[1]); }
+  if(h>r.len-Lg*1.3){ const E=proj(r.d[n-1]), w=unit(proj(r.d[n-2]),E); clipHalf(ctx,E,-w[0],-w[1]); }
+  fn(ctx,trackBack(r,Lpx,h),u,s); shade(ctx,false,s);
+  ctx.restore();
+}
 
 let lastT=performance.now();
 function frame(now){
@@ -1140,8 +1159,8 @@ function applyScene(sc, instant){
     const r=R[k], spec=sc.legs[k];
     if(!spec){ r.ta=0; continue; }
     r.ta=1;
-    if(spec==='full'){ r.tp=1; if(r.a<0.05||instant) r.p=1; r.dur=600; }
-    else { const ms=+spec.split(':')[1]; r.tp=1; r.dur=ms; if(!instant){ r.p=0; r.a=1; } else r.p=1; }
+    if(spec==='full'){ r.tp=1; if(r.a<0.05||instant) r.p=1; r.dur=600; r.tDone=-Infinity; }
+    else { const ms=+spec.split(':')[1]; r.tp=1; r.dur=ms; if(!instant){ r.p=0; r.a=1; r.tDone=null; } else { r.p=1; r.tDone=-Infinity; } }
   }
   labels=sc.labels||[]; pins=sc.pins||[]; pulse=sc.pulse? performance.now():null; headLeg=sc.head||null;
   mapEl.className = sc.dim||'';
@@ -1198,7 +1217,7 @@ function jStop(){ clearTimeout(jTimer); jTimer=null; $('#jPlay').textContent='�
 function jPlay(){
   if(jTimer){ jStop(); return; }
   $('#jPlay').textContent='❚❚ Pause';
-  const run=s=>{ const d=showStep(s); if(s<5) jTimer=setTimeout(()=>run(s+1), d+1800); else jTimer=null, $('#jPlay').textContent='▶ Play the journey'; };
+  const run=s=>{ const d=showStep(s); if(s<5) jTimer=setTimeout(()=>run(s+1), d+2600); else jTimer=null, $('#jPlay').textContent='▶ Play the journey'; };
   run(S.step>=5?0:S.step+ (S.step===0?0:1));
 }
 $('#jPlay').onclick=jPlay; $('#jReplay').onclick=()=>{ jStop(); showStep(0); };
